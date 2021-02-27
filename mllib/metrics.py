@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn import metrics as skmetrics
+from . import charts
 
 
 class ClassificationMetrics:
@@ -122,8 +123,7 @@ def print_classification_score(model, X_test, y_test, target_names=None,
     cnf = confusion_matrix(y_true_classes, y_pred_classes)
     # cnf = get_enhanced_confusion_matrix(y_true_classes, y_pred_classes, target_names)
     # Import confusion_matrix plotting from the library
-    from charts import plot_confusion_matrix
-    plot_confusion_matrix(cnf, target_names, title)
+    charts.plot_confusion_matrix(cnf, target_names, title)
 
 
 def get_enhanced_confusion_matrix(y, y_pred, labels=None):

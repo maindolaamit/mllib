@@ -139,7 +139,7 @@ class ClassifierSelectHelper(EstimatorSelectHelper):
         return self.df_test_score
 
 
-def evaluate_classifiers(X_train, y_train, X_test, y_test, is_binary=False, cv=5, sort_by='f1-score'):
+def evaluate_classifiers(X_train, y_train, X_test, y_test, is_binary=False, cv=5, sort_by=['f1-score']):
     """
     Perform raw evaluation of the Classifer Models on the given data and return the Validation and Test Score results
     """
@@ -192,7 +192,10 @@ def fine_tune_classifier(model_name, x_train, y_train, cv=5, verbose=0, randomiz
         }
     elif model_name == 'ada':
         model = ensemble.AdaBoostClassifier()
-        param_grid = {}
+        param_grid = {
+            "learning_rate": [0.05, 0.10, 0.15, 0.20, 0.25, 0.30],
+            "n_estimators": [0, 50, 100, 500]
+        }
     elif model_name == 'gb':
         model = ensemble.GradientBoostingClassifier
         param_grid = {}
@@ -213,24 +216,25 @@ def fine_tune_classifier(model_name, x_train, y_train, cv=5, verbose=0, randomiz
         model = linear_model.SGDClassifier()
         param_grid = {}
 
-    from time import perf_counter
-
-    start_time = perf_counter()
-
-    grid_search = None
-    if randomized:
-        print(f"Performing Randomized search for {type(model).__name__}...")
-        grid_search = model_selection.RandomizedSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
-    else:
-        print(f"Performing Grid search for {type(model).__name__}...")
-        grid_search = model_selection.GridSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
-
-    # Start fine tuning of the model
-    grid_search.fit(x_train, y_train)
-    time_taken = round(perf_counter() - start_time, 2)
-    print(f"Time elapsed(s) : {get_display_time(time_taken)} | score : {grid_search.best_score_:.2}")
-    print(f"Best parameters : {grid_search.best_params_} ")
-    return grid_search.best_estimator_
+    return fine_tune_model(model, param_grid, x_train, y_train, cv, verbose, randomized)
+    # from time import perf_counter
+    #
+    # start_time = perf_counter()
+    #
+    # grid_search = None
+    # if randomized:
+    #     print(f"Performing Randomized search for {type(model).__name__}...")
+    #     grid_search = model_selection.RandomizedSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
+    # else:
+    #     print(f"Performing Grid search for {type(model).__name__}...")
+    #     grid_search = model_selection.GridSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
+    #
+    # # Start fine tuning of the model
+    # grid_search.fit(x_train, y_train)
+    # time_taken = round(perf_counter() - start_time, 2)
+    # print(f"Time elapsed(s) : {get_display_time(time_taken)} | score : {grid_search.best_score_:.2}")
+    # print(f"Best parameters : {grid_search.best_params_} ")
+    # return grid_search.best_estimator_
 
 
 def fine_tune_model(model, param_grid, x_train, y_train, cv=5, verbose=0, randomized=False):
@@ -249,18 +253,18 @@ def fine_tune_model(model, param_grid, x_train, y_train, cv=5, verbose=0, random
 
     start_time = perf_counter()
 
-    print(f"Performing Grid search for {type(model).__name__}...")
-
     grid_search = None
     if randomized:
+        print(f"Performing Randomized search for {type(model).__name__}...")
         grid_search = model_selection.RandomizedSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
     else:
+        print(f"Performing Grid search for {type(model).__name__}...")
         grid_search = model_selection.GridSearchCV(model, param_grid, cv=cv, verbose=verbose, n_jobs=-1)
 
     # Start fine tuning of the model
     grid_search.fit(x_train, y_train)
     time_taken = round(perf_counter() - start_time, 2)
-    print(f"Time elapsed(s) : {get_display_time(time_taken)} | score : {grid_search.best_score_:.2}")
+    print(f"Time elapsed : {get_display_time(time_taken)} | score : {grid_search.best_score_:.2}")
     print(f"Best parameters : {grid_search.best_params_} ")
     return grid_search.best_estimator_
 
@@ -295,7 +299,6 @@ FOLD_MAPPPING = {
     3: [0, 1, 2, 4],
     4: [0, 1, 2, 3]
 }
-
 
 # def train_models_with_folds(fold, df, target_col, drop_columns, models,
 #                             problem_type='classification', score='accuracy'):
