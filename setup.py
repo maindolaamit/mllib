@@ -1,23 +1,57 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+import os
+import io
+from pathlib import Path
+
+from setuptools import setup, find_packages
+
+# Package meta-data.
+__name__ = 'ml_framework'
+__description__ = 'My framework cum Library for ML and DL.'
+__url__ = 'https://github.com/me/myproject'
+__email__ = 'maindola.amit@gmail.com'
+__author__ = 'Amit Maindola'
+__requires_python__ = '>=3.6.0'
+__version__ = '0.1.0'
+__license__ = 'MIT'
+
+here = Path('__file__').resolve().parent.parent
+
+
+def get_long_description():
+    # Import the README and use it as the long-description.
+    # Note: this will only work if 'README.md' is present in your MANIFEST.in file!
+    try:
+        with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+            long_description = '\n' + f.read()
+    except FileNotFoundError:
+        long_description = "Unable to read README.md"
+
+    return long_description
+
+
+def find_requirements():
+    with open('requirements.txt', 'r') as f:
+        return f.read().splitlines()
+
 
 setup(
-    name='ml_framework',
-    version='0.1',
-    author='Amit Maindola',
-    author_email='maindola.amit@gmail.com',
-    description='My custom ML Framework having Library of helper methods for ML and DL work',
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url='https://github.com/maindolaamit/mllib',
+    name=__name__,
+    version=__version__,
+    packages=find_packages(),
+    license=__license__,
+    author=__author__,
+    author_email=__email__,
+    description=__description__,
+    long_description=get_long_description(),
+    long_description_content_type='text/markdown',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    packages=find_packages(),
-    install_requires=["numpy", "pandas", "matplotlib", "seaborn", "sklearn",
-                      "emoji", "nltk", "lightgbm", "xgboost"]
+    url='https://github.com/maindolaamit/mllib',
+    #     install_requires=["numpy", "pandas", "matplotlib", "seaborn", "sklearn", "emoji", "nltk", "lightgbm", "xgboost"]
+    install_requires=find_requirements(),
 )

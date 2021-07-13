@@ -54,6 +54,73 @@ def get_boruta(X, y):
     return boruta
 
 
+def get_columns_by_variance(X, y, threshold=0.0):
+    """
+    Method to fetch columns based on threshold variance
+    """
+    from sklearn.feature_selection import VarianceThreshold
+    selector = VarianceThreshold(threshold).fit(X, y)
+    return X.columns[selector.get_support()]
+
+
+def drop_columns_by_variance(df, threshold=0):
+    """
+    Method to drop all columns having zero variance
+    """
+    columns = get_columns_by_variance(df, threshold)
+    drop_columns = set(df.columns) - set(columns)
+    print(f"Dropping columns : {drop_columns}")
+    return df.drop(drop_columns, axis=1)
+
+
+def get_zero_var_cols(df):
+    """
+    Method to get all columns having zero variance
+    """
+    variance = df.var()
+    # Check for numerical columns
+    zero_var_columns = [variance[variance == 0].index.to_list()]
+    # Check for Feature columns
+    columns = df.select_dtypes(include='object').columns.to_list()
+    for column in columns:
+        if df[column].nunique == 1:
+            zero_var_columns.append(column)
+
+    return zero_var_columns
+
+
+# def get_uniq_label_counts(df):
+#     """
+#     Get all unique labels count in the DataFrame
+#     """
+#     object_columns = get_dtype_columns(df)
+#     return list(map(lambda x: (x, len(df[x].unique())), object_columns))
+#
+#
+# def get_col_top_labels(series, top=10):
+#     """
+#     Get top n labels for the given Pandas Series
+#     """
+#     index = series.value_counts().head(top).index
+#     return index.to_list()
+#
+#
+# def top_one_hot_columns(df, top=10):
+#     """
+#     Returns a DataFrame of One Hot Encoded values of all Object columns
+#     """
+#     object_columns = get_dtype_columns(df)
+#     one_hot_df = pd.DataFrame()
+#     for col in object_columns:
+#         for label in get_col_top_labels(df[col], top):
+#             one_hot_col = str(col + '_' + label)
+#             series = df[col]
+#             if one_hot_col not in one_hot_df.columns.to_list():
+#                 one_hot_df[one_hot_col] = np.where(series == label, 1, 0)
+#
+#     return one_hot_df
+
+
 class CategoricalFeatures:
     def __init__(self, df, features, encoding_type='label', fillna_strategy='mode'):
         """

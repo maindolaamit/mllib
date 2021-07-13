@@ -1,24 +1,59 @@
 # https://raw.githubusercontent.com/abhishekkrthakur/mlframework/master/src/cross_validation.py
 # Code used from the above link
-
+import os
+from pathlib import Path
 import pandas as pd
 import numpy as np
 from sklearn import model_selection
-
-"""
-- -- binary classification
-- -- multi class classification
-- -- multi label classification
-- -- single column regression
-- -- multi column regression
-- -- holdout
-"""
 
 # Keep randomness same
 np.random.seed(2210)
 
 
+def create_folds(input_file, target_cols, shuffle=True, stratify=False):
+    """
+    Create a dataframe kfold number and saves as train.csv
+    :param input_file: Input data file, should have columns
+    :param target_cols: target column
+    :param shuffle: if data frame needs to be shuffled
+    :param stratify: if fold should preserve strata ratio
+    :return:
+    """
+    # Read the dataset
+    input_df = pd.read_csv(input_file)
+    # Create index for fold
+    input_df['kfold'] = -1
+
+    # Shuffle the dataset
+    if shuffle:
+        input_df = input_df.sample(frac=1).reset_index(drop=True)
+
+    # Select Fold strategy
+    cv = None
+    if stratify:
+        cv = model_selection.StratifiedKFold(n_splits=5, shuffle=False)
+    else:
+        cv = model_selection.KFold(n_splits=5, shuffle=shuffle)
+
+    # Loop in folds
+    for fold, (train_idx, test_idx) in enumerate(cv.split(X=input_df, y=input_df[target_cols].values)):
+        input_df.loc[test_idx, 'kfold'] = fold
+
+    input_dir = Path(input_file).resolve().parent
+    input_df.to_csv(os.path.join(input_dir, 'train.csv'), index=False)
+    return input_df
+
+
 class CrossValidation:
+    """
+    - -- binary classification
+    - -- multi class classification
+    - -- multi label classification
+    - -- single column regression
+    - -- multi column regression
+    - -- holdout
+    """
+
     def __init__(
             self,
             df,
@@ -57,7 +92,6 @@ class CrossValidation:
                 for fold, (train_idx, val_idx) in enumerate(
                         kf.split(X=self.dataframe, y=self.dataframe[target].values)):
                     self.dataframe.loc[val_idx, 'kfold'] = fold
-
         elif self.problem_type in ("single_col_regression", "multi_col_regression"):
             if self.num_targets != 1 and self.problem_type == "single_col_regression":
                 raise Exception("Invalid number of targets for this problem type")
@@ -66,13 +100,11 @@ class CrossValidation:
             kf = model_selection.KFold(n_splits=self.num_folds)
             for fold, (train_idx, val_idx) in enumerate(kf.split(X=self.dataframe)):
                 self.dataframe.loc[val_idx, 'kfold'] = fold
-
         elif self.problem_type.startswith("holdout_"):
             holdout_percentage = int(self.problem_type.split("_")[1])
             num_holdout_samples = int(len(self.dataframe) * holdout_percentage / 100)
             self.dataframe.loc[:len(self.dataframe) - num_holdout_samples, "kfold"] = 0
             self.dataframe.loc[len(self.dataframe) - num_holdout_samples:, "kfold"] = 1
-
         elif self.problem_type == "multilabel_classification":
             if self.num_targets != 1:
                 raise Exception("Invalid number of targets for this problem type")
@@ -80,7 +112,6 @@ class CrossValidation:
             kf = model_selection.StratifiedKFold(n_splits=self.num_folds)
             for fold, (train_idx, val_idx) in enumerate(kf.split(X=self.dataframe, y=targets)):
                 self.dataframe.loc[val_idx, 'kfold'] = fold
-
         else:
             raise Exception("Problem type not understood!")
 
